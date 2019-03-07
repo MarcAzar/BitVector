@@ -80,6 +80,6 @@ when isMainModule:
   
   echo "temp: ", temp
   
-  bitVec[0..<3] = temp
+  bitVec[0..<2] = temp
   echo "bitVec: ", bitVec
 
