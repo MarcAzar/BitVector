@@ -79,22 +79,14 @@ proc `[]`*[T](b: BitVector[T], i: Slice[int]): T {.inline.} =
     let elB = i.b div (T.sizeof * 8)
     let offsetA = i.a and (T.sizeof * 8 - 1)
     let offsetB = (T.sizeof * 8) - offsetA
-    echo offsetA
-    echo offsetB
-    echo "elA ", elA
-    echo "elB ", elB
     result = b.Base[elA] shr offsetA
-    echo "result ", result
     if elA != elB:
       let slice = b.Base[elB] shl offsetB
-      echo "slice ", slice
       result = result or slice
     elif i.a != i.b and i.b < (T.sizeof * 8 - 1):
       let innerOffset = i.b and (T.sizeof * 8 - 1)
-      echo "inner ", innerOffset
       result =
         (((1.T shl innerOffset) - 1) or (1.T shl innerOffset)) and result
-      echo "resultinner ", result
   else:
     assert(i.a < b.cap and i.b >= 0, "Index out of range")
     assert((i.a - i.b) <= (T.sizeof * 8),
