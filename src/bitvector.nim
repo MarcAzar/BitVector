@@ -1,108 +1,127 @@
 # Copyright (C) Marc Azar. All rights reserved.
 # MIT License. Look at LICENSE.txt for more info
 #
-## A simple Nim implementation of BitVector with base SomeOrdinal (i.e: 
-## int8-64, uint8-64, enum) with support for slices, and `seq`
-## supported operations. BitVector format order is little endian, where 
-## Least Significant Byte has the lowest address. BitVector is an in-memory
-## bit vector, no mmap option is available at the moment.
+## A high performance Nim implementation of BitVector with base 
+## SomeUnsignedInt(i.e: uint8-64) with support for slices, and 
+## `seq` supported operations. BitVector format order is little endian, 
+## where Least Significant Byte has the lowest address.
+## BitVector is an in-memory bit vector, no mmap option is available at 
+## the moment.
 ##
 type 
   Bit = range[0..1]
-  BitVector*[T: SomeInteger | char] = object 
+  BitVector*[T: SomeUnsignedInt] = object
     Base: seq[T]
 
-proc numberOfDigits(x: BiggestInt, r: int): int {.inline.} =
-  ## Calculates how many digits `x` has when each digit covers `r` bits.
-  result = 1
-  var y = x shr r
-  while y > 0:
-    y = y shr r
-    inc(result)
-
-proc toString[T](x: T): string {.inline.} =
-  ## converts `x` into its binary representation. The resulting string is
-  ## always `len` characters long. No leading ``0b`` prefix is generated.
-  var
-    mask: T = 1
-    shift: T = 0
-    length = T.sizeof * 8
-  result = newString(length)
-  for j in countdown(length - 1, 0):
-    result[j] = chr(int((x and mask) shr shift) + ord('0'))
-    shift = shift + 1
-    mask = mask shl 1
+# Forward declarations
+proc `len`*[T](b: BitVector[T]): int {.inline.}
+proc cap*[T](b: BitVector[T]): int {.inline.}
 
 proc newBitVector*[T](size: int): BitVector[T] {.inline.} =
-  result.Base = newSeq[T](size)
+  ## Create new in-memory BitVector of type T and number of elements is
+  ## `size` rounded up to the nearest byte. 
+  assert(size >= T.sizeof * 8, "Min vector size is " & $(T.sizeof * 8))
+  let numberOfElements = size div (T.sizeof * 8)
+  result.Base = newSeqOfCap[T](numberOfElements)
+  result.Base.setlen(numberOfElements)
 
 proc `[]`*[T](b: BitVector[T], i: int): Bit {.inline.} =
+  assert(i < b.cap and i >= 0, "Index out of range")
   b.Base[i div (T.sizeof * 8)] shr (i and (T.sizeof * 8 - 1)) and 1
 
 proc `[]=`*[T](b: var BitVector[T], i: int, value: Bit) {.inline.} =
+  assert(i < b.cap and i >= 0, "Index out of range")
   var w = addr b.Base[i div (T.sizeof * 8)]
   if value == 0:
     w[] = w[] and not (1.T shl (i and (T.sizeof * 8 - 1)))
   else:
     w[] = w[] or (1.T shl (i and (T.sizeof * 8 - 1)))
 
-proc toBinary[T](x: BiggestInt): seq[T] {.inline.} =
-  ## converts `x` into its binary representation. Inserst the binary
-  ## representaion into a Bit Vector with little endian formating.
-  var
-    mask: BiggestInt = 1
-    shift: BiggestInt = 0
-    length = numberOfDigits(x, 1)
-  result = newSeq[T](length)
-  for j in countdown(length - 1, 0):
-    result[j] = cast[Bit]((x and mask) shr shift)
-    shift = shift + 1
-    mask = mask shl 1
-
-proc `[]`*[T](b: BitVector[T], i: Slice[int]): seq[T] {.inline.} =
+proc `[]`*[T](b: BitVector[T], i: Slice[int]): T {.inline.} =
   if i.a < i.b:
-    b.Base[i]
+    assert(i.b < b.cap and i.a >= 0, "Index out of range")
+    assert((i.b - i.a) <= (T.sizeof * 8),
+      "Only slices up to " & $(T.sizeof * 8) & " bits are supported")
+    let elA = i.a div (T.sizeof * 8)
+    let elB = i.b div (T.sizeof * 8)
+    let offsetA = i.a and (T.sizeof * 8 - 1)
+    let offsetB = (T.sizeof * 8) - offsetA
+    echo offsetA
+    echo offsetB
+    echo "elA ", elA
+    echo "elB ", elB
+    result = b.Base[elA] shr offsetA
+    echo "result ", result
+    if elA != elB:
+      let slice = b.Base[elB] shl offsetB
+      echo "slice ", slice
+      result = result or slice
+    elif i.a != i.b and i.b < (T.sizeof * 8 - 1):
+      let innerOffset = i.b and (T.sizeof * 8 - 1)
+      echo "inner ", innerOffset
+      result =
+        (((1.T shl innerOffset) - 1) or (1.T shl innerOffset)) and result
+      echo "resultinner ", result
   else:
-    b.Base[i.b..i.a]
+    assert(i.a < b.cap and i.b >= 0, "Index out of range")
+    assert((i.a - i.b) <= (T.sizeof * 8),
+      "Only slices up to " & $(T.sizeof * 8) & " bits are supported")
+    let elA = i.b div (T.sizeof * 8)
+    let elB = i.a div (T.sizeof * 8)
+    let offsetA = i.b and (T.sizeof * 8 - 1)
+    let offsetB = (T.sizeof * 8) - offsetA
+    result = b.Base[elA] shr offsetA
+    if elA != elB:
+      let slice = b.Base[elB] shl offsetB
+      result = result or slice
+    elif i.a != i.b and i.a < (T.sizeof * 8 - 1):
+      let innerOffset = i.a and (T.sizeof * 8 - 1)
+      result =
+        (((1.T shl innerOffset) - 1) or (1.T shl innerOffset)) and result
 
-proc `[]=`*[T](b: var BitVector[T], i: Slice[int], value: seq[T]) {.inline.} =
+proc `[]=`*[T](b: var BitVector[T], i: Slice[int], value: T) {.inline.} =
+  ## Note that this uses bitwise-or, therefore it will NOT overwrite
+  ## previously set bits 
   if i.a < i.b:
-    b[i] = value
-  else:
-    b[i.b..i.a] = value
+    assert(i.b < b.cap and i.a >= 0, "Index out of range")
+    assert((i.b - i.a) <= (T.sizeof * 8),
+      "Only slices up to " & $(T.sizeof * 8) & " bits are supported")
+    let elA = i.a div (T.sizeof * 8)
+    let elB = i.b div (T.sizeof * 8)
+    let offsetA = i.a and (T.sizeof * 8 - 1)
+    let offsetB = (T.sizeof * 8) - offsetA
 
-proc `[]=`*[T](b: var BitVector[T], i: Slice[int], v: BiggestInt) {.inline.} =
-  var value = toBinary[T](v)
-  if i.a < i.b:
-    b[i] = value
+    let insertA = value shl offsetA
+    b.Base[elA] = b.Base[elA] or insertA
+    if elA != elB:
+      let insertB = value shr offsetB
+      b.Base[elB] = b.Base[elB] or insertB
   else:
-    b[i.b..i.a] = value
+    assert(i.a < b.cap and i.b >= 0, "Index out of range")
+    assert((i.a - i.b) <= (T.sizeof * 8),
+      "Only slices up to " & $(T.sizeof * 8) & " bits are supported")
+    let elA = i.b div (T.sizeof * 8)
+    let elB = i.a div (T.sizeof * 8)
+    let offsetA = i.b and (T.sizeof * 8 - 1)
+    let offsetB = (T.sizeof * 8) - offsetA
 
-proc `==`*[T](b: seq[T], v: BiggestInt): bool {.inline.} =
-  var value = toBinary[T](v)
-  b == value
+    let insertA = value shl offsetA
+    b.Base[elA] = b.Base[elA] or insertA
+    if elA != elB:
+      let insertB = value shr offsetB
+      b.Base[elB] = b.Base[elB] or insertB
+
+proc cap*[T](b: BitVector[T]): int {.inline.} =
+  ## Returns capacity, i.e number of bits
+  b.len * (T.sizeof * 8)
 
 proc `len`*[T](b: BitVector[T]): int {.inline.} =
-  len(b.Base)
+  ## Returns length, i.e number of elements
+  b.Base.len
 
-iterator `items`*[T](a: BitVector[T]): T {.inline.} =
-  ## iterates over each item of `a`.
-  var i = 0
-  let L = a.len
-  while i < L:
-    yield a[i]
-    assert(a.len == L, "bit vector modified while iterating over it")
-
-iterator `pairs`*[T](a: BitVector[T]): tuple[key: int, val: T] {.inline.} =
-  ## iterates over each item of `a`. Yields ``(index, a[index])`` pairs.
-  var i = 0
-  while i < a.len:
-    yield (i, a[i])
-    i.inc
-
-proc `$`*[T](b: BitVector[T]): string {.inline.} =
-  result = "{"
-  for key in b.items:
-    if result.len > 1: result.add(", ")
-    result.addQuoted(key.toString)
-  result.add("}")
+proc `$`*(b: BitVector): string {.inline.} =
+  ## Prints number of bits and elements the BitVector is capable of handling.
+  ## It also prints out a slice if specified in little endian format.
+  result =
+    "BitVector with capacity of " & $b.cap & " bits and " & $b.len &
+      " unique elements"
