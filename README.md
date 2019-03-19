@@ -1,5 +1,5 @@
 # BitVector
-A high performance Nim implementation of BitVector with base SomeUnsignedInt(i.e: uint8-64) with support for slices, and `seq` supported operations. BitVector format order is little endian, where Least Significant Byte has the lowest address. BitVector is an in-memory bit vector. If looking for a mmap option consider using <a class="external reference" href="https://github.com/onecodex/nim-bitarraynim-bitarray">nim-bitarray</a>.
+A high performance Nim implementation of BitVector with base SomeUnsignedInt(i.e: uint8-64) with support for slices, and `seq` supported operations. BitVector format order is little endian, where Least Significant Byte has the lowest address. BitVector is an in-memory bit vector. A Bloom Fliter is also provided to demonstrate BitVector usage along with Cyclic Polynomial Hashing. If looking for a mmap type BitVector consider using <a class="external reference" href="https://github.com/onecodex/nim-bitarraynim-bitarray">nim-bitarray</a>.
 ## Example Usage                                                        
 ```
 import bitvector
