@@ -22,13 +22,14 @@ proc newBloomFilter*(numberOfElements: int, numberOfBitsPerItem: int, numberOfHa
 
 {.push overflowChecks: off.}
 proc hash(bf: BloomFilter, hashFunc: var CyclicHash, item: string): seq[int] =
-  for j in 0..<2:
+  for j in 0..<5:
     hashFunc.eat(item[j])
-  for j in 2..<item.len:
+  for j in 5..<item.len:
     hashFunc.update(item[j-5], item[j])
   newSeq(result, bf.numberOfHashes)
   for i in 0..<bf.numberOfHashes:
-    result[i] = (hashFunc.hashValue * i) mod bf.numberOfBits
+    result[i] = (hashFunc.hashValue + hashFunc.hashValue * i) mod 
+      bf.numberOfBits
   hashFunc.reset
   return result
 {.pop.}
@@ -52,6 +53,7 @@ when isMainModule:
   var hashes: seq[int] = bf.hash(hashFn, "Here we go!")
   bf.insert(hashes)
   assert bf.lookup(hashes)
+  hashes = bf.hash(hashFn, "I'm not here.")
   assert (not bf.lookup(hashes))
 
   let testStringLen = 50
