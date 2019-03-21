@@ -65,12 +65,9 @@ when isMainModule:
   precision = 4), " seconds to lookup ", nTests, " items (in-memory).")
 
   # Test that bit arrays < sizeof(BitArrayScalar) fail
-  try:
-    var bitvector64 = newBitVector[uint](64)
-    doAssert bitvector64.cap == 64
-    doAssert bitvector64.len == 1
-  except:
-    echo "wrong capacity"
+  var bitvector64 = newBitVector[uint](64)
+  doAssert bitvector64.cap == 128
+  doAssert bitvector64.len == 2
 
   # Test clearing bits
   var bitvectorE = newBitVector[uint](64)
