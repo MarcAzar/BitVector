@@ -14,23 +14,23 @@ import bitvector
     assert(ba[0..4] == 5, "incorrect result: " & $ba[0..4])
     assert(ba[1..4] == 2, "incorrect result: " & $ba[1..4])
  
-  var bitarrayA = newBitVector[uint](2e9)
-  bitarrayA[0] = 1
-  bitarrayA[1] = 1
-  bitarrayA[2] = 1
+  var bitvectorA = newBitVector[uint](2e9)
+  bitvectorA[0] = 1
+  bitvectorA[1] = 1
+  bitvectorA[2] = 1
   
   # Test range lookups/inserts
-  bitarrayA[65] = 1
-  doAssert bitarrayA[65] == 1
-  bitarrayA[131] = 1
-  bitarrayA[194] = 1
-  assert bitarrayA[2..66] == bitarrayA[131..194]
+  bitvectorA[65] = 1
+  doAssert bitvectorA[65] == 1
+  bitvectorA[131] = 1
+  bitvectorA[194] = 1
+  assert bitvectorA[2..66] == bitvectorA[131..194]
 
-  let sliceValue = bitarrayA[131..194]
-  bitarrayA[270..333] = sliceValue
-  bitarrayA[400..463] = uint(-9223372036854775807)
-  assert bitarrayA[131..194] == bitarrayA[270..333]
-  assert bitarrayA[131..194] == bitarrayA[400..463]
+  let sliceValue = bitvectorA[131..194]
+  bitvectorA[270..333] = sliceValue
+  bitvectorA[400..463] = uint(-9223372036854775807)
+  assert bitvectorA[131..194] == bitvectorA[270..333]
+  assert bitvectorA[131..194] == bitvectorA[400..463]
 ```
 ## Installation
 Install <a class="external reference" href="https://nim-lang.org/install.html">Nim</a> for Windows or Unix by following the instructions in , or preferably by installing <a class="reference external" href="https://github.com/dom96/choosenim">choosenim</a>
@@ -38,4 +38,4 @@ Install <a class="external reference" href="https://nim-lang.org/install.html">N
 Once ```choosenim``` is installed you can ```nimble install bitvector``` to pull the latest bipbuffer release and all its dependencies
 
 ## Documentation
-Documentation can be found <a class="external reference" href="https://marcazar.github.io/BitVector/docs/bitvector.html">here</a>
+Documentation can be found <a class="external reference" href="https://marcazar.github.io/BitVector/docs/bitvector.html">BitVector</a> and <a class="external reference" href="https://marcazar.github.io/BitVector/docs/bloom.html">Bloom Filter</a>
