@@ -1,4 +1,4 @@
-bitvector
+src/bitvector
 tests/test_bitvector
 src/bloom
-src/nim.cfg
+tests/test_bloom

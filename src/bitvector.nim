@@ -47,7 +47,7 @@ type
     Base: seq[T]
 
 # Forward declarations
-proc `len`*[T](b: BitVector[T]): int {.inline.}
+proc `len`*(b: BitVector): int {.inline.}
 proc cap*[T](b: BitVector[T]): int {.inline.}
 
 proc newBitVector*[T](size: int): BitVector[T] {.inline.} =
@@ -140,7 +140,7 @@ proc cap*[T](b: BitVector[T]): int {.inline.} =
   ## Returns capacity, i.e number of bits
   b.len * (T.sizeof * 8)
 
-proc `len`*[T](b: BitVector[T]): int {.inline.} =
+proc `len`*(b: BitVector): int {.inline.} =
   ## Returns length, i.e number of elements
   b.Base.len
 
