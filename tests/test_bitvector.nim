@@ -1,8 +1,5 @@
-import bitvector
-from os import nil
-from strutils import `%`, formatFloat, ffDecimal, toBin
+import bitvector, os, times
 from random import rand, randomize
-from times import nil
 
 when isMainModule:
   echo "Testing bitvector library"
@@ -49,20 +46,20 @@ when isMainModule:
     nTestPositions[i] = rand(nBits)
 
   # Timing tests
+  echo("Time in seconds to insert ", nTests, " items (in-memory).")
   var startTime, endTime: float
-  startTime = times.cpuTime()
+  startTime = cpuTime()
   for i in 0..(nTests - 1):
     bitvectorA[nTestPositions[i]] = 1
-  endTime = times.cpuTime()
-  echo("Took ", formatFloat(endTime - startTime, format = ffDecimal,
-  precision = 4), " seconds to insert ", nTests, " items (in-memory).")
+  endTime = cpuTime()
+  echo(endTime - startTime)
 
-  startTime = times.cpuTime()
+  echo("Time in seconds to lookup ", nTests, " items (in-memory).")
+  startTime = cpuTime()
   for i in 0..(nTests - 1):
     doAssert bitvectorA[nTestPositions[i]] == 1
-  endTime = times.cpuTime()
-  echo("Took ", formatFloat(endTime - startTime, format = ffDecimal,
-  precision = 4), " seconds to lookup ", nTests, " items (in-memory).")
+  endTime = cpuTime()
+  echo(endTime - startTime)
 
   # Test that bit arrays < sizeof(BitArrayScalar) fail
   var bitvector64 = newBitVector[uint](64)
