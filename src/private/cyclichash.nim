@@ -13,7 +13,7 @@
 import characterhash
 
 type
-  CyclicHash*[HashType, CharType] = object
+  CyclicHash* = object
     hashValue*: HashType
     n: int
     wordSize: int
@@ -22,7 +22,7 @@ type
     myR: int
     maskN: HashType
 
-proc newCyclicHash*(myN: int, myWordSize: int) : CyclicHash[HashType, CharType] {.inline.} =
+proc newCyclicHash*(myN: int, myWordSize: int) : CyclicHash {.inline.} =
   ## Creates a new Cyclic Hash with a quasi-random[*]_ initial has value of
   ## size `myWordSize` in bits. 
   ## 
@@ -32,15 +32,17 @@ proc newCyclicHash*(myN: int, myWordSize: int) : CyclicHash[HashType, CharType] 
   ## .. [*] See Character Hash for more info
   assert(myWordSize < 8 * HashType.sizeof,
     "Can't create " & $myWordSize & " bit hash values")
-  result.hashValue = 0
-  result.n = myN
-  result.wordSize = myWordSize
-  result.hashes = hasher(maskFnc(myWordSize))
-  result.maskOne = maskFnc(myWordSize - 1)
-  result.myR = myN mod myWordSize
-  result.maskN = maskFnc(myWordSize - result.myR)
+  result = CyclicHash(
+    hashValue: 0,
+    n: myN,
+    wordSize: myWordSize,
+    hashes: hasher(maskFnc(myWordSize)),
+    maskOne: maskFnc(myWordSize - 1),
+    myR: myN mod myWordSize,
+    maskN: maskFnc(myWordSize - result.myR)
+  )
 
-proc newCyclicHash*(myN: int, seedOne, seedTwo: int, myWordSize: int) : CyclicHash[HashType, CharType] {.inline.} =
+proc newCyclicHash*(myN: int, seedOne, seedTwo: int, myWordSize: int) : CyclicHash {.inline.} =
   ## Creates a new Cyclic Hash with a random[*]_ initial has value of size
   ## `myWordSize` in bits.
   ##
@@ -50,13 +52,15 @@ proc newCyclicHash*(myN: int, seedOne, seedTwo: int, myWordSize: int) : CyclicHa
   ## .. [*] See Character Hash for more info
   assert(myWordSize < 8 * HashType.sizeof,
     "Can't create " & $myWordSize & " bit hash values")
-  result.hashValue = 0
-  result.n = myN
-  result.wordSize = myWordSize
-  result.hashes = hasher(maskFnc(myWordSize), seedOne, seedTwo)
-  result.maskOne = maskFnc(myWordSize - 1)
-  result.myR = myN mod myWordSize
-  result.maskN = maskFnc(myWordSize - result.myR)
+  result = CyclicHash(
+    hashValue: 0,
+    n: myN,
+    wordSize: myWordSize,
+    hashes: hasher(maskFnc(myWordSize), seedOne, seedTwo),
+    maskOne: maskFnc(myWordSize - 1),
+    myR: myN mod myWordSize,
+    maskN: maskFnc(myWordSize - result.myR),
+  )
 
 template fastLeftShiftN(y: CyclicHash, x: var HashType) =
   x = ((x and y.maskN) shl y.myR) or (x shr (y.wordSize - y.myR))
