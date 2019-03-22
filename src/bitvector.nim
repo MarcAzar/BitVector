@@ -2,7 +2,7 @@
 # MIT License. Look at LICENSE.txt for more info
 #
 ## A high performance Nim implementation of BitVector with base 
-## (int, int64, uint32, or uint8), and with support for slices and other
+## (int, int64, uint32, uint16, or uint8), and with support for slices and other
 ## `seq` supported operations. BitVector format order is little endian, 
 ## where Least Significant Byte has the lowest address.
 ## BitVector is an in-memory bit vector, no mmap option is available at 
@@ -42,7 +42,7 @@
 ##    assert bitvectorA[131..194] == bitvectorA[400..463]
 ##
 type 
-  Units* = int | uint8 | uint32 | int64
+  Units* = int | uint8 | uint16 | uint32 | int64
   Bit = range[0..1]
   BitVector*[T: Units] = object
     Base: seq[T]

@@ -11,12 +11,13 @@ import private/cyclichash
 import math
 
 type
+  T = uint16
   BloomFilter*[H: Units] = object
     bitVector: BitVector[H]
     numberOfHashes: int
     numberOfBits: int
     numberOfElements: int
-    hasher: CyclicHash[H, char]
+    hasher: CyclicHash[T, char]
 
 proc optimalNumOfHash(numOfBits, numOfEls: int): int {.inline.} =
   ## Calculate optimal number of hash functions based on bit size of Bloom
@@ -43,7 +44,7 @@ proc newBloomFilter*[H](numberOfElements: int, numberOfBits: int, numOfHashes: i
     numberOfHashes: numberOfHashes,
     numberOfBits: numberOfBits,
     numberOfElements: numberOfElements,
-    hasher: newCyclicHash[H, char](1, 20)
+    hasher: newCyclicHash[T, char](1, 15)
   )
 
 proc newBloomFilter*[H](numberOfElements: int, falsePositiveRate: float, numOfHashes: int = 0): BloomFilter[H] {.inline.} =
@@ -60,7 +61,7 @@ proc newBloomFilter*[H](numberOfElements: int, falsePositiveRate: float, numOfHa
     numberOfHashes: numberOfHashes,
     numberOfBits: numberOfBits,
     numberOfElements: numberOfElements,
-    hasher: newCyclicHash[H, char](1, 20)
+    hasher: newCyclicHash[T, char](1, 15)
   )
 
 {.push overflowChecks: off.}
@@ -69,26 +70,20 @@ proc hash[H](bf: var BloomFilter[H], item: string): seq[int] {.inline.}=
   ## normal non-rolling hash function for demonstration purposes.
   ##
   bf.hasher.reset
-  var slide = item.len - bf.numberOfHashes
-  if slide < 0:
-      slide = 1
-  elif slide > bf.numberOfHashes:
-      slide = bf.numberOfHashes - 1
+  let slide = 1
   newSeq(result, bf.numberOfHashes)
-  for j in 0..<slide:
-    bf.hasher.eat(item[j])
-    result[j] = abs(cast[int](bf.hasher.hashValue))
-  if (item.len - bf.numberOfHashes) > 0:
-    for j in slide..<bf.numberOfHashes:
-      bf.hasher.update(item[j-slide], item[j])
-      result[j] = abs(cast[int](bf.hasher.hashValue))
-  else:
-    for j in slide..<item.len:
-      bf.hasher.update(item[j-slide], item[j])
-      result[j] = abs(cast[int](bf.hasher.hashValue))
-    for i in item.len..<bf.numberOfHashes:
-      result[i] = abs(cast[int](result[i-1] + result[i-2] * i)) mod 
-        bf.numberOfBits
+  for i in 0 ..< slide:
+    bf.hasher.eat(item[i])
+  result[0] = abs(cast[int](bf.hasher.hashValue))
+  
+  for i in slide ..< min(item.len, bf.numberOfHashes):
+    bf.hasher.update(item[i - slide], item[i])
+    result[1 + i - slide] = abs(cast[int](bf.hasher.hashValue))
+  
+  if (item.len - slide) < bf.numberOfHashes:
+    for i in item.len ..< (bf.numberOfHashes + slide):
+      bf.hasher.update(char(i mod 255), char(i + 50 mod 255))
+      result[i - slide] = abs(cast[int](bf.hasher.hashValue))
   return result
 {.pop.}
 

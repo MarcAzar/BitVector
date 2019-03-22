@@ -11,7 +11,7 @@
 import random
 
 type
-  Units* = int | uint8 | uint32 | int64
+  Units* = int | uint8 | uint16 | uint32 | int64
   CharacterHash*[H: Units, C: char] = object
     hashValues*: seq[H]
 
