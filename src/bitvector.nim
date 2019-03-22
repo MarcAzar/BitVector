@@ -43,7 +43,7 @@
 ##
 type 
   Bit = range[0..1]
-  BitVector*[T: SomeUnsignedInt] = object
+  BitVector*[T: int] = object
     Base: seq[T]
 
 # Forward declarations
@@ -54,7 +54,7 @@ proc newBitVector*[T](size: int): BitVector[T] {.inline.} =
   ## Create new in-memory BitVector of type T and number of elements is
   ## `size` rounded up to the nearest byte. 
   assert(size >= T.sizeof * 8, "Min vector size is " & $(T.sizeof * 8))
-  let numberOfElements = size div (T.sizeof * 8) + 1
+  let numberOfElements = 1 + size div (T.sizeof * 8)
   result.Base = newSeqOfCap[T](numberOfElements)
   result.Base.setlen(numberOfElements)
 

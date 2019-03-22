@@ -13,25 +13,26 @@ import math
 type
   HashType = int
   CharType = char
-  BloomFilter*[T: SomeUnsignedInt] = object
+  BloomFilter*[T: int] = object
     bitVector: BitVector[T]
     numberOfHashes: int
     numberOfBits: int
+    numberOfElements: int
     hasher: CyclicHash
 
 proc optimalNumOfHash(numOfBits, numOfEls: int): int {.inline.} =
   ## Calculate optimal number of hash functions based on bit size of Bloom
   ## Fliter. k = (m/n) * ln(2)
   ##
-  max(int((numOfBits / numOfEls) * ln(2.0).ceil), 1)
+  int(((numOfBits / numOfEls) * ln(2.0)).round)
 
-proc recommendedBitSize(numOfEls: int, falsePositives: float): int{.inline.} =
+proc recommendedBitSize(numOfEls: int, falsePositiveRate: float): int {.inline.} =
   ## Estimate the bit size of the Bloom Filter based on required 
   ## false positive rate. m = - n*ln(p) / (ln(2))^2
   ##
   assert(numOfEls > 0)
-  assert(0.0 < falsePositives and falsePositives < 1.0)
-  int((numOfEls.float * ln(falsePositives)) / (-8.0 * log(2.0, 2)^2).ceil)
+  assert(0.0 < falsePositiveRate and falsePositiveRate < 1.0)
+  numOfEls * int(ceil(-1.0 * ln(falsePositiveRate) / ln(2.0)^2 ))
 
 proc newBloomFilter*[T](numberOfElements: int, numberOfBits: int, numOfHashes: int = 0): BloomFilter[T] {.inline.} =
   ## Creat a new Bloom Filter. If number of hashes provided is zero, we
@@ -42,22 +43,24 @@ proc newBloomFilter*[T](numberOfElements: int, numberOfBits: int, numOfHashes: i
     bitVector: newBitVector[T](numberOfBits),
     numberOfHashes: numberOfHashes,
     numberOfBits: numberOfBits,
-    hasher: newCyclicHash(4, 19)
+    numberOfElements: numberOfElements,
+    hasher: newCyclicHash(1, 20)
   )
 
-proc newBloomFilter*[T](numberOfElements: int, falsePositives: float, numOfHashes: int = 0): BloomFilter[T] {.inline.} =
+proc newBloomFilter*[T](numberOfElements: int, falsePositiveRate: float, numOfHashes: int = 0): BloomFilter[T] {.inline.} =
   ## Create a new Bloom Filter. If number of hashes provided is zero, we
   ## calculate the optimal number of hashes automatically. Using 
   ## false positive rate provided, we automatically calculate the bit size
   ## required to ensure requirement is met.
   ##
-  let numberOfBits = recommendedBitSize(numberOfElements, falsePositives)
+  let numberOfBits = recommendedBitSize(numberOfElements, falsePositiveRate)
   let numberOfHashes = if numOfHashes == 0: optimalNumOfHash(numberOfBits, numberOfElements) else: numOfHashes
   result = BloomFilter[T](
     bitVector: newBitVector[T](numberOfBits),
     numberOfHashes: numberOfHashes,
     numberOfBits: numberOfBits,
-    hasher: newCyclicHash(4, 19)
+    numberOfElements: numberOfElements,
+    hasher: newCyclicHash(1, 20)
   )
 
 {.push overflowChecks: off.}
@@ -66,14 +69,25 @@ proc hash(bf: var BloomFilter, item: string): seq[int] {.inline.}=
   ## normal non-rolling hash function for demonstration purposes.
   ##
   bf.hasher.reset
-  for j in 0..<4:
-    bf.hasher.eat(item[j])
-  for j in 4..<item.len:
-    bf.hasher.update(item[j-4], item[j])
+  var slide = item.len - bf.numberOfHashes
+  if slide < 0:
+      slide = 1
+  elif slide > bf.numberOfHashes:
+      slide = bf.numberOfHashes - 1
   newSeq(result, bf.numberOfHashes)
-  for i in 0..<bf.numberOfHashes:
-    result[i] = (bf.hasher.hashValue + bf.hasher.hashValue * i) mod 
-      bf.numberOfBits
+  for j in 0..<slide:
+    bf.hasher.eat(item[j])
+    result[j] = abs(bf.hasher.hashValue)
+  if (item.len - bf.numberOfHashes) > 0:
+    for j in slide..<bf.numberOfHashes:
+      bf.hasher.update(item[j-slide], item[j])
+      result[j] = abs(bf.hasher.hashValue)
+  else:
+    for j in slide..<item.len:
+      bf.hasher.update(item[j-slide], item[j])
+      result[j] = abs(bf.hasher.hashValue)
+    for i in item.len..<bf.numberOfHashes:
+      result[i] = abs(result[i-1] + result[i-2] * i) mod bf.numberOfBits
   return result
 {.pop.}
 
@@ -90,3 +104,11 @@ proc lookup*(bf: var BloomFilter, item: string): bool {.inline.} =
   for h in hashes:
     result = result and bool(bf.bitVector[h])
   return result
+
+proc `$`*(bf: BloomFilter): string {.inline.} =
+  let bitsPerItem: float = bf.numberOfBits / bf.numberOfElements
+  let errorRate: float = exp(-1.0 * bitsPerItem * ln(2.0)^2)
+  let size: float = bf.numberOfBits.float * 125e-9
+  result = "Bloom filter with " & $bf.numberOfElements & " capacity, " &
+    $bf.numberOfHashes & " hash functions, and with a target error rate of " &
+    $errorRate & " and occupying size(MB) " & $size
