@@ -1,5 +1,5 @@
 # BitVector
-A high performance Nim implementation of BitVector with base (int, int64, uint32, or uint8), and with support for slices and other `seq` supported operations. BitVector format order is little endian, where Least Significant Byte has the lowest address. BitVector is an in-memory bit vector. A Bloom Fliter is also provided to demonstrate BitVector usage along with <a class="external reference" href="https://github.com/MarcAzar/Cyclic-Polynomial-Hash">Cyclic Polynomial Hashing</a>. If looking for a mmap type BitVector consider using <a class="external reference" href="https://github.com/onecodex/nim-bitarray">nim-bitarray</a>.
+A high performance Nim implementation of BitVector with base (int, int64, uint32, uint16, or uint8), and with support for slices and other `seq` supported operations. BitVector format order is little endian, where Least Significant Byte has the lowest address. BitVector is an in-memory bit vector. A Bloom Fliter is also provided to demonstrate BitVector usage along with <a class="external reference" href="https://github.com/MarcAzar/Cyclic-Polynomial-Hash">Cyclic Polynomial Hashing</a>. If looking for a mmap type BitVector consider using <a class="external reference" href="https://github.com/onecodex/nim-bitarray">nim-bitarray</a>.
 ## Example Usage                                                        
 ```
 import bitvector
@@ -33,7 +33,7 @@ import bitvector
   assert bitvectorA[131..194] == bitvectorA[400..463]
 ```
 ## Bloom Filter Performance
-A Bloom Filter speed test is included in `test_bloom.nim`. A test case of 10M insertions executes in ~.84 seconds and 10M lookups in ~0.86 seconds for a Bloom filter with a 1 in 1000 target error rate (0.001), and 0.00037 actual error rate. This was performed on asingle thread by passing the -d:release flag to the Nim compiler on a Dell XP3 13 i7 with 16GB ram. `k` was computed to its optimal 10 hash functions, while the Bloom filter size was 18.75MB in size.
+A Bloom Filter speed test is included in `test_bloom.nim`. A test case of 10M insertions executes in ~.61 seconds and 10M lookups in ~0.62 seconds for a Bloom filter with a 1 in 1000 target error rate (0.001) and 0.0 actual error rate. This was performed on asingle thread by passing the -d:release flag to the Nim compiler on a Dell XP3 13 laptop (i7 with 16GB Ram). `k` was computed to its optimal 10 hash functions, while the Bloom filter size was 18.75MB in size.
 
 ## Installation
 Install <a class="external reference" href="https://nim-lang.org/install.html">Nim</a> for Windows or Unix by following the instructions in , or preferably by installing <a class="reference external" href="https://github.com/dom96/choosenim">choosenim</a>
