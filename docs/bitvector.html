@@ -1242,7 +1242,9 @@ function main() {
 <li>
   <a class="reference reference-toplevel" href="#7" id="57">Types</a>
   <ul class="simple simple-toc-section">
-      <li><a class="reference" href="#BitVector"
+      <li><a class="reference" href="#Units"
+    title="Units = int | uint8 | uint32 | int64"><wbr />Units<span class="attachedType" style="visibility:hidden"></span></a></li>
+  <li><a class="reference" href="#BitVector"
     title="BitVector[T] = object
   Base: seq[T]"><wbr />Bit<wbr />Vector<span class="attachedType" style="visibility:hidden"></span></a></li>
 
@@ -1263,10 +1265,10 @@ function main() {
     title="`[]=`[T](b: var BitVector[T]; i: Slice[int]; value: T)"><wbr />`[]=`<span class="attachedType" style="visibility:hidden">BitVector</span></a></li>
   <li><a class="reference" href="#cap%2CBitVector%5BT%5D"
     title="cap[T](b: BitVector[T]): int"><wbr />cap<span class="attachedType" style="visibility:hidden">BitVector</span></a></li>
-  <li><a class="reference" href="#len%2CBitVector"
-    title="len(b: BitVector): int"><wbr />len<span class="attachedType" style="visibility:hidden">BitVector</span></a></li>
-  <li><a class="reference" href="#%24%2CBitVector"
-    title="`$`(b: BitVector): string"><wbr />`$`<span class="attachedType" style="visibility:hidden">BitVector</span></a></li>
+  <li><a class="reference" href="#len%2CBitVector%5BT%5D"
+    title="len[T](b: BitVector[T]): int"><wbr />len<span class="attachedType" style="visibility:hidden">BitVector</span></a></li>
+  <li><a class="reference" href="#%24%2CBitVector%5BT%5D"
+    title="`$`[T](b: BitVector[T]): string"><wbr />`$`<span class="attachedType" style="visibility:hidden">BitVector</span></a></li>
 
   </ul>
 </li>
@@ -1276,7 +1278,7 @@ function main() {
   </div>
   <div class="nine columns" id="content">
   <div id="tocRoot"></div>
-  <p class="module-desc">A high performance Nim implementation of BitVector with base SomeUnsignedInt(i.e: uint8-64) with support for slices, and <cite>seq</cite> supported operations. BitVector format order is little endian, where Least Significant Byte has the lowest address. BitVector is an in-memory bit vector, no mmap option is available at the moment.
+  <p class="module-desc">A high performance Nim implementation of BitVector with base (int, int64, uint32, or uint8), and with support for slices and other <cite>seq</cite> supported operations. BitVector format order is little endian, where Least Significant Byte has the lowest address. BitVector is an in-memory bit vector, no mmap option is available at the moment.
 <h1><a class="toc-backref" id="usage" href="#usage">Usage</a></h1><blockquote><p><pre>import bitvector
 
 block:
@@ -1311,6 +1313,12 @@ assert bitvectorA[131..194] == bitvectorA[400..463]</pre>
   <div class="section" id="7">
 <h1><a class="toc-backref" href="#7">Types</a></h1>
 <dl class="item">
+<a id="Units"></a>
+<dt><pre><a href="bitvector.html#Units"><span class="Identifier">Units</span></a> <span class="Other">=</span> <span class="Identifier">int</span> <span class="Operator">|</span> <span class="Identifier">uint8</span> <span class="Operator">|</span> <span class="Identifier">uint32</span> <span class="Operator">|</span> <span class="Identifier">int64</span></pre></dt>
+<dd>
+
+
+</dd>
 <a id="BitVector"></a>
 <dt><pre><a href="bitvector.html#BitVector"><span class="Identifier">BitVector</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span> <span class="Other">=</span> <span class="Keyword">object</span>
   <span class="Identifier">Base</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span>
@@ -1360,14 +1368,14 @@ Note that this uses bitwise-or, therefore it will NOT overwrite previously set b
 Returns capacity, i.e number of bits
 
 </dd>
-<a id="len,BitVector"></a>
-<dt><pre><span class="Keyword">proc</span> <span class="Identifier">len</span><span class="Other">(</span><span class="Identifier">b</span><span class="Other">:</span> <a href="bitvector.html#BitVector"><span class="Identifier">BitVector</span></a><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">int</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">inline</span></span><span class="Other">.}</span></span></pre></dt>
+<a id="len,BitVector[T]"></a>
+<dt><pre><span class="Keyword">proc</span> <span class="Identifier">len</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">b</span><span class="Other">:</span> <a href="bitvector.html#BitVector"><span class="Identifier">BitVector</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">int</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">inline</span></span><span class="Other">.}</span></span></pre></dt>
 <dd>
 Returns length, i.e number of elements
 
 </dd>
-<a id="$,BitVector"></a>
-<dt><pre><span class="Keyword">proc</span> <span class="Identifier">`$`</span><span class="Other">(</span><span class="Identifier">b</span><span class="Other">:</span> <a href="bitvector.html#BitVector"><span class="Identifier">BitVector</span></a><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">string</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">inline</span></span><span class="Other">.}</span></span></pre></dt>
+<a id="$,BitVector[T]"></a>
+<dt><pre><span class="Keyword">proc</span> <span class="Identifier">`$`</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">b</span><span class="Other">:</span> <a href="bitvector.html#BitVector"><span class="Identifier">BitVector</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">string</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">inline</span></span><span class="Other">.}</span></span></pre></dt>
 <dd>
 Prints number of bits and elements the BitVector is capable of handling. It also prints out a slice if specified in little endian format.
 
@@ -1382,7 +1390,7 @@ Prints number of bits and elements the BitVector is capable of handling. It also
       <div class="twelve-columns footer">
         <span class="nim-sprite"></span>
         <br/>
-        <small>Made with Nim. Generated: 2019-03-21 18:34:09 UTC</small>
+        <small>Made with Nim. Generated: 2019-03-22 17:06:53 UTC</small>
       </div>
     </div>
   </div>
