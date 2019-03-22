@@ -13,16 +13,16 @@
 import characterhash
 
 type
-  CyclicHash* = object
-    hashValue*: HashType
+  CyclicHash*[H: Units, C: char] = object
+    hashValue*: H
     n: int
     wordSize: int
-    hashes: Hashes
-    maskOne: HashType
+    hasher: CharacterHash[H, C]
+    maskOne: H
     myR: int
-    maskN: HashType
+    maskN: H
 
-proc newCyclicHash*(myN: int, myWordSize: int) : CyclicHash {.inline.} =
+proc newCyclicHash*[H, C](myN: int, myWordSize: int) : CyclicHash[H, C] {.inline.} =
   ## Creates a new Cyclic Hash with a quasi-random[*]_ initial has value of
   ## size `myWordSize` in bits. 
   ## 
@@ -30,19 +30,19 @@ proc newCyclicHash*(myN: int, myWordSize: int) : CyclicHash {.inline.} =
   ## the bitsize of `myWordSzie`
   ##
   ## .. [*] See Character Hash for more info
-  assert(myWordSize < 8 * HashType.sizeof,
+  assert(cast[uint](myWordSize) <= 8 * H.sizeof,
     "Can't create " & $myWordSize & " bit hash values")
-  result = CyclicHash(
+  result = CyclicHash[H, C](
     hashValue: 0,
     n: myN,
     wordSize: myWordSize,
-    hashes: hasher(maskFnc(myWordSize)),
-    maskOne: maskFnc(myWordSize - 1),
+    hasher: hash[H, C](maskFnc[H](myWordSize)),
+    maskOne: maskFnc[H](myWordSize - 1),
     myR: myN mod myWordSize,
-    maskN: maskFnc(myWordSize - result.myR)
+    maskN: maskFnc[H](myWordSize - result.myR)
   )
 
-proc newCyclicHash*(myN: int, seedOne, seedTwo: int, myWordSize: int) : CyclicHash {.inline.} =
+proc newCyclicHash*[H, C](myN: int, seedOne, seedTwo: int, myWordSize: int) : CyclicHash[H, C] {.inline.} =
   ## Creates a new Cyclic Hash with a random[*]_ initial has value of size
   ## `myWordSize` in bits.
   ##
@@ -50,83 +50,84 @@ proc newCyclicHash*(myN: int, seedOne, seedTwo: int, myWordSize: int) : CyclicHa
   ## the bitsize of `myWordSzie`
   ##
   ## .. [*] See Character Hash for more info
-  assert(myWordSize < 8 * HashType.sizeof,
+  assert(cast[uint](myWordSize) <= 8 * H.sizeof,
     "Can't create " & $myWordSize & " bit hash values")
-  result = CyclicHash(
+  result = CyclicHash[H, C](
     hashValue: 0,
     n: myN,
     wordSize: myWordSize,
-    hashes: hasher(maskFnc(myWordSize), seedOne, seedTwo),
-    maskOne: maskFnc(myWordSize - 1),
+    hasher: hash[H, C](maskFnc[H](myWordSize), seedOne, seedTwo),
+    maskOne: maskFnc[H](myWordSize - 1),
     myR: myN mod myWordSize,
-    maskN: maskFnc(myWordSize - result.myR),
+    maskN: maskFnc[H](myWordSize - result.myR),
   )
 
-template fastLeftShiftN(y: CyclicHash, x: var HashType) =
+template fastLeftShiftN[H, C](y: CyclicHash[H, C], x: var H) =
   x = ((x and y.maskN) shl y.myR) or (x shr (y.wordSize - y.myR))
 
-template fastLeftShiftOne(y: CyclicHash, x: var HashType) =
+template fastLeftShiftOne[H, C](y: CyclicHash[H, C], x: var H) =
   x = ((x and y.maskOne) shl 1) or (x shr (y.wordSize - 1))
 
-template fastRightShiftOne(y: CyclicHash, x: var HashType) =
+template fastRightShiftOne[H, C](y: CyclicHash[H, C], x: var H) =
   x = (x shr 1) or ((x and 1) shl (y.wordSize - 1))
 
-template getFastLeftShiftOne(y: CyclicHash, x: HashType): HashType =
+template getFastLeftShiftOne[H, C](y: CyclicHash[H, C], x: H): H =
   ((x and y.maskOne) shl 1) or (x shr (y.wordSize - 1))
 
-template getFastRightShiftOne(y:CyclicHash, x: HashType): HashType =
+template getFastRightShiftOne[H, C](y:CyclicHash[H, C], x: H): H =
   (x shr 1) or ((x and 1) shl (y.wordSize - 1))
 
-proc hash*(y: var CyclicHash, c: seq[char]): HashType {.inline.}=
+proc trueHash*[H, C](y: CyclicHash[H, C], c: seq[char]): H {.inline.}=
   ## Hash complete sequence of char without the need to update. This is a
   ## helper proceedure to test whether the update proceedure below yeilds
   ## correct results in unit testing
   ##
-  var answer: HashType = 0
+  var answer: H = 0
   for k in 0 ..< c.len:
     y.fastLeftShiftOne(answer)
-    answer = answer xor y.hashes[ord(c[k])]
+    answer = answer xor y.hasher.hashValues[cast[int](c[k])]
     result = answer
 
-proc update*(y: var CyclicHash, outChar: CharType, inChar: CharType) {.inline.}=
+proc update*[H, C](y: var CyclicHash[H, C], outChar, inChar: char) {.inline.}=
   ## Updates the rolling hash after shifting left and xoring hash value of
   ## `outChar` add `inChar`
   ##
-  var z = y.hashes[ord(outChar)]
+  var z = y.hasher.hashValues[cast[int](outChar)]
   y.fastLeftShiftN(z)
   y.hashValue = y.getFastLeftShiftOne(y.hashValue) xor z xor 
-    y.hashes[ord(inChar)]
+    y.hasher.hashValues[cast[int](inChar)]
 
-proc reverseUpdate*(y: var CyclicHash, outChar: CharType, inChar: CharType) {.inline.}=
+proc reverseUpdate*[H, C](y: var CyclicHash[H, C], outChar, inChar: char) {.inline.}=
   # Cyclic Hash is reversible! We can undo a previous update by performing a
   # right shift. See `test_cyclichash` for an example.
   #
-  var z = y.hashes[ord(outChar)]
+  var z = y.hasher.hashValues[cast[int](outChar)]
   y.fastLeftShiftN(z)
-  y.hashValue = y.hashValue xor z xor y.hashes[ord(inChar)]
+  y.hashValue = y.hashValue xor z xor y.hasher.hashValues[cast[int](inChar)]
   y.hashValue = y.getFastRightShiftOne(y.hashValue)
 
-proc eat*(y: var CyclicHash, inChar: CharType) {.inline.} =
+proc eat*[H, C](y: var CyclicHash[H, C], inChar: char) {.inline.} =
   ## Move rolling hash forward by shifting left and xoring the hash value of
   ## the new `inChar`
   ##
   y.fastLeftShiftOne(y.hashValue)
-  y.hashValue = y.hashValue xor y.hashes[ord(inChar)]
+  y.hashValue = y.hashValue xor y.hasher.hashValues[cast[int](inChar)]
 
-proc hashPrepend*(y: var CyclicHash, x: CharType): HashType {.inline.}=
+proc hashPrepend*[H, C](y: var CyclicHash[H, C], x: char): H {.inline.}=
   ## Prepends a rolling hash by adding a hashed `x` into the front of the
   ## rolling hash sequence
   ##
-  var z = y.hashes[ord(x)]
+  var z = y.hasher.hashValues[cast[int](x)]
   y.fastLeftShiftN(z)
   result = z xor y.hashValue
 
-proc hashExtend*(y: CyclicHash, x: CharType): HashType {.inline.}=
+proc hashExtend*[H, C](y: CyclicHash[H, C], x: char): H {.inline.}=
   ## Extends a rolling hash by adding a hashed `x` into the end of the rolling
   ## hash sequence
   ##
-  result = y.getFastLeftShiftOne(y.hashValue) xor y.hashes[ord(x)]
+  result = y.getFastLeftShiftOne(y.hashValue) xor
+    y.hasher.hashValues[cast[int](x)]
 
-proc reset*(y: var CyclicHash) {.inline.}=
+proc reset*[H, C](y: var CyclicHash[H, C]) {.inline.}=
   ## Reset the hash values of rolling hash to `0`
   y.hashValue = 0

@@ -11,14 +11,12 @@ import private/cyclichash
 import math
 
 type
-  HashType = int
-  CharType = char
-  BloomFilter*[T: int] = object
-    bitVector: BitVector[T]
+  BloomFilter*[H: Units] = object
+    bitVector: BitVector[H]
     numberOfHashes: int
     numberOfBits: int
     numberOfElements: int
-    hasher: CyclicHash
+    hasher: CyclicHash[H, char]
 
 proc optimalNumOfHash(numOfBits, numOfEls: int): int {.inline.} =
   ## Calculate optimal number of hash functions based on bit size of Bloom
@@ -34,37 +32,39 @@ proc recommendedBitSize(numOfEls: int, falsePositiveRate: float): int {.inline.}
   assert(0.0 < falsePositiveRate and falsePositiveRate < 1.0)
   numOfEls * int(ceil(-1.0 * ln(falsePositiveRate) / ln(2.0)^2 ))
 
-proc newBloomFilter*[T](numberOfElements: int, numberOfBits: int, numOfHashes: int = 0): BloomFilter[T] {.inline.} =
+proc newBloomFilter*[H](numberOfElements: int, numberOfBits: int, numOfHashes: int = 0): BloomFilter[H] {.inline.} =
   ## Creat a new Bloom Filter. If number of hashes provided is zero, we
   ## calculate the optimal number of hashes automatically.
   ##
-  let numberOfHashes = if numOfHashes == 0: optimalNumOfHash(numberOfBits, numberOfElements) else: numOfHashes
-  result = BloomFilter[T](
-    bitVector: newBitVector[T](numberOfBits),
+  let numberOfHashes = if numOfHashes == 0:
+    optimalNumOfHash(numberOfBits, numberOfElements) else: numOfHashes
+  result = BloomFilter[H](
+    bitVector: newBitVector[H](numberOfBits),
     numberOfHashes: numberOfHashes,
     numberOfBits: numberOfBits,
     numberOfElements: numberOfElements,
-    hasher: newCyclicHash(1, 20)
+    hasher: newCyclicHash[H, char](1, 20)
   )
 
-proc newBloomFilter*[T](numberOfElements: int, falsePositiveRate: float, numOfHashes: int = 0): BloomFilter[T] {.inline.} =
+proc newBloomFilter*[H](numberOfElements: int, falsePositiveRate: float, numOfHashes: int = 0): BloomFilter[H] {.inline.} =
   ## Create a new Bloom Filter. If number of hashes provided is zero, we
   ## calculate the optimal number of hashes automatically. Using 
   ## false positive rate provided, we automatically calculate the bit size
   ## required to ensure requirement is met.
   ##
   let numberOfBits = recommendedBitSize(numberOfElements, falsePositiveRate)
-  let numberOfHashes = if numOfHashes == 0: optimalNumOfHash(numberOfBits, numberOfElements) else: numOfHashes
-  result = BloomFilter[T](
-    bitVector: newBitVector[T](numberOfBits),
+  let numberOfHashes = if numOfHashes == 0:
+    optimalNumOfHash(numberOfBits, numberOfElements) else: numOfHashes
+  result = BloomFilter[H](
+    bitVector: newBitVector[H](numberOfBits),
     numberOfHashes: numberOfHashes,
     numberOfBits: numberOfBits,
     numberOfElements: numberOfElements,
-    hasher: newCyclicHash(1, 20)
+    hasher: newCyclicHash[H, char](1, 20)
   )
 
 {.push overflowChecks: off.}
-proc hash(bf: var BloomFilter, item: string): seq[int] {.inline.}=
+proc hash[H](bf: var BloomFilter[H], item: string): seq[int] {.inline.}=
   ## Internal hashing function based on Cyclic Polynomial Hash, but used as a
   ## normal non-rolling hash function for demonstration purposes.
   ##
@@ -77,35 +77,36 @@ proc hash(bf: var BloomFilter, item: string): seq[int] {.inline.}=
   newSeq(result, bf.numberOfHashes)
   for j in 0..<slide:
     bf.hasher.eat(item[j])
-    result[j] = abs(bf.hasher.hashValue)
+    result[j] = abs(cast[int](bf.hasher.hashValue))
   if (item.len - bf.numberOfHashes) > 0:
     for j in slide..<bf.numberOfHashes:
       bf.hasher.update(item[j-slide], item[j])
-      result[j] = abs(bf.hasher.hashValue)
+      result[j] = abs(cast[int](bf.hasher.hashValue))
   else:
     for j in slide..<item.len:
       bf.hasher.update(item[j-slide], item[j])
-      result[j] = abs(bf.hasher.hashValue)
+      result[j] = abs(cast[int](bf.hasher.hashValue))
     for i in item.len..<bf.numberOfHashes:
-      result[i] = abs(result[i-1] + result[i-2] * i) mod bf.numberOfBits
+      result[i] = abs(cast[int](result[i-1] + result[i-2] * i)) mod 
+        bf.numberOfBits
   return result
 {.pop.}
 
-proc insert*(bf: var BloomFilter, item: string) {.inline.} =
+proc insert*[H](bf: var BloomFilter[H], item: string) {.inline.} =
   ## Insert `item` into Bloom Filter
-  let hashes = hash(bf, item)
+  let hashes = hash[H](bf, item)
   for h in hashes:
     bf.bitVector[h] = 1
 
-proc lookup*(bf: var BloomFilter, item: string): bool {.inline.} =
+proc lookup*[H](bf: var BloomFilter[H], item: string): bool {.inline.} =
   ## Check if `item` is in Bloom Filter
-  let hashes = hash(bf, item)
+  let hashes = hash[H](bf, item)
   result = true
   for h in hashes:
     result = result and bool(bf.bitVector[h])
   return result
 
-proc `$`*(bf: BloomFilter): string {.inline.} =
+proc `$`*[H](bf: BloomFilter[H]): string {.inline.} =
   let bitsPerItem: float = bf.numberOfBits / bf.numberOfElements
   let errorRate: float = exp(-1.0 * bitsPerItem * ln(2.0)^2)
   let size: float = bf.numberOfBits.float * 125e-9

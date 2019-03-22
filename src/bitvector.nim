@@ -2,7 +2,7 @@
 # MIT License. Look at LICENSE.txt for more info
 #
 ## A high performance Nim implementation of BitVector with base 
-## SomeUnsignedInt(i.e: uint8-64) with support for slices, and 
+## (int, int64, uint32, or uint8), and with support for slices and other
 ## `seq` supported operations. BitVector format order is little endian, 
 ## where Least Significant Byte has the lowest address.
 ## BitVector is an in-memory bit vector, no mmap option is available at 
@@ -42,12 +42,13 @@
 ##    assert bitvectorA[131..194] == bitvectorA[400..463]
 ##
 type 
+  Units* = int | uint8 | uint32 | int64
   Bit = range[0..1]
-  BitVector*[T: int] = object
+  BitVector*[T: Units] = object
     Base: seq[T]
 
 # Forward declarations
-proc `len`*(b: BitVector): int {.inline.}
+proc `len`*[T](b: BitVector[T]): int {.inline.}
 proc cap*[T](b: BitVector[T]): int {.inline.}
 
 proc newBitVector*[T](size: int): BitVector[T] {.inline.} =
@@ -140,11 +141,11 @@ proc cap*[T](b: BitVector[T]): int {.inline.} =
   ## Returns capacity, i.e number of bits
   b.len * (T.sizeof * 8)
 
-proc `len`*(b: BitVector): int {.inline.} =
+proc `len`*[T](b: BitVector[T]): int {.inline.} =
   ## Returns length, i.e number of elements
   b.Base.len
 
-proc `$`*(b: BitVector): string {.inline.} =
+proc `$`*[T](b: BitVector[T]): string {.inline.} =
   ## Prints number of bits and elements the BitVector is capable of handling.
   ## It also prints out a slice if specified in little endian format.
   result =

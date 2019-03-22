@@ -2,16 +2,18 @@ import bloom
 import os, times
 from random import rand
 
+type
+  H = int
+
 when isMainModule:
   echo "Quick working Bloom filter example."
   let nTests = int(1e7)
   var falsePositiveRate = 0.001
-  var bf = newBloomFilter[int](nTests, falsePositiveRate, 0)
+  var bf = newBloomFilter[H](nTests, falsePositiveRate, 0)
   echo bf
-
-#  bf.insert("Here we go!")
-#  assert bf.lookup("Here we go!")
-#  assert (not bf.lookup("I'm not here"))
+  bf.insert("Here we go!")
+  assert bf.lookup("Here we go!")
+  assert (not bf.lookup("I'm not here"))
 
   let testStringLen = 7
   let sampleChars =
