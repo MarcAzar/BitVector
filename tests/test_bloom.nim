@@ -9,7 +9,7 @@ when isMainModule:
   echo "Quick working Bloom filter example."
   let nTests = int(1e7)
   var falsePositiveRate = 0.001
-  var bf = newBloomFilter[H](nTests, falsePositiveRate, 0)
+  var bf = newBloomFilter[H](nTests, falsePositiveRate, 0, true)
   echo bf
   bf.insert("Here we go!")
   assert bf.lookup("Here we go!")

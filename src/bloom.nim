@@ -7,17 +7,39 @@
 ## Bloom Filter base is a bitvector.
 ##
 import bitvector
-import private/cyclichash
 import math
+import hashes
+
+{.compile: "murmur3.c".}
 
 type
-  T = uint16
+  TMurmurHashes = array[0..1, int]
   BloomFilter*[H: Units] = object
     bitVector: BitVector[H]
     numberOfHashes: int
     numberOfBits: int
     numberOfElements: int
-    hasher: CyclicHash[T, char]
+    useMurmurHash: bool 
+
+proc rawMurmurHash(key: cstring, length: int, seed: uint32): TMurmurHashes {.importc: "MurmurHash3_x64_128".}
+
+proc murmurHash(key: string, seed: uint32): TMurmurHashes =
+  result = [0,0]
+  result = rawMurmurHash(key = key, length = key.len, seed = seed)
+
+proc hashA(item: string, maxValue: int): int =
+  result = hash(item) mod maxValue
+
+proc hashB(item: string, maxValue: int): int =
+  result = hash(item & " b") mod maxValue
+
+proc hashN(item: string, n: int, maxValue: int): int =
+  ## Get the nth hash of a string using the formula hash_a + n * hash_b
+  ## which uses 2 hash functions vs. k and has comparable properties
+  ## See Kirsch and Mitzenmacher, 2008: 
+  ## http://www.eecs.harvard.edu/~kirsch/pubs/bbbf/rsa.pdf
+  result = abs((hashA(item, maxValue) + n * hashB(item, maxValue))) mod
+    maxValue
 
 proc optimalNumOfHash(numOfBits, numOfEls: int): int {.inline.} =
   ## Calculate optimal number of hash functions based on bit size of Bloom
@@ -33,7 +55,7 @@ proc recommendedBitSize(numOfEls: int, falsePositiveRate: float): int {.inline.}
   assert(0.0 < falsePositiveRate and falsePositiveRate < 1.0)
   numOfEls * int(ceil(-1.0 * ln(falsePositiveRate) / ln(2.0)^2 ))
 
-proc newBloomFilter*[H](numberOfElements: int, numberOfBits: int, numOfHashes: int = 0): BloomFilter[H] {.inline.} =
+proc newBloomFilter*[H](numberOfElements: int, numberOfBits: int, numOfHashes: int = 0, useMurmurHash: bool = true): BloomFilter[H] {.inline.} =
   ## Creat a new Bloom Filter. If number of hashes provided is zero, we
   ## calculate the optimal number of hashes automatically.
   ##
@@ -44,10 +66,10 @@ proc newBloomFilter*[H](numberOfElements: int, numberOfBits: int, numOfHashes: i
     numberOfHashes: numberOfHashes,
     numberOfBits: numberOfBits,
     numberOfElements: numberOfElements,
-    hasher: newCyclicHash[T, char](1, 15)
+    useMurmurHash: useMurmurHash
   )
 
-proc newBloomFilter*[H](numberOfElements: int, falsePositiveRate: float, numOfHashes: int = 0): BloomFilter[H] {.inline.} =
+proc newBloomFilter*[H](numberOfElements: int, falsePositiveRate: float, numOfHashes: int = 0, useMurmurHash: bool = true): BloomFilter[H] {.inline.} =
   ## Create a new Bloom Filter. If number of hashes provided is zero, we
   ## calculate the optimal number of hashes automatically. Using 
   ## false positive rate provided, we automatically calculate the bit size
@@ -61,41 +83,42 @@ proc newBloomFilter*[H](numberOfElements: int, falsePositiveRate: float, numOfHa
     numberOfHashes: numberOfHashes,
     numberOfBits: numberOfBits,
     numberOfElements: numberOfElements,
-    hasher: newCyclicHash[T, char](1, 15)
+    useMurmurHash: useMurmurHash
   )
 
 {.push overflowChecks: off.}
-proc hash[H](bf: var BloomFilter[H], item: string): seq[int] {.inline.}=
-  ## Internal hashing function based on Cyclic Polynomial Hash, but used as a
-  ## normal non-rolling hash function for demonstration purposes.
-  ##
-  bf.hasher.reset
-  let slide = 1
-  newSeq(result, bf.numberOfHashes)
-  for i in 0 ..< slide:
-    bf.hasher.eat(item[i])
-  result[0] = abs(cast[int](bf.hasher.hashValue))
-  
-  for i in slide ..< min(item.len, bf.numberOfHashes):
-    bf.hasher.update(item[i - slide], item[i])
-    result[1 + i - slide] = abs(cast[int](bf.hasher.hashValue))
-  
-  if (item.len - slide) < bf.numberOfHashes:
-    for i in item.len ..< (bf.numberOfHashes + slide):
-      bf.hasher.update(char(i mod 255), char(i + 50 mod 255))
-      result[i - slide] = abs(cast[int](bf.hasher.hashValue))
+
+proc hashMurmur[H](bf: BloomFilter[H], item: string): seq[int] {.inline.}=
+  result = newSeq[int](bf.numberOfHashes)
+  let murmurHashes = murmurHash(key = item, seed = 0'u32)
+  for i in 0..(bf.numberOfHashes - 1):
+    result[i] = abs(murmurHashes[0] + i * murmurHashes[1]) mod bf.numberOfBits
   return result
+
 {.pop.}
+
+proc hashNim[H](bf: BloomFilter[H], item: string): seq[int] {.inline.} =
+  newSeq(result, bf.numberOfHashes)
+  for i in 0..(bf.numberOfHashes - 1):
+    result[i] = hashN(item, i, bf.numberOfBits)
+  return result
+
+proc hasher[H](bf: BloomFilter[H], item: string): seq[int] {.inline.}=
+  if bf.useMurmurHash:
+    result = bf.hashMurmur(item = item)
+  else:
+    result = bf.hashNim(item = item)
+  return result
 
 proc insert*[H](bf: var BloomFilter[H], item: string) {.inline.} =
   ## Insert `item` into Bloom Filter
-  let hashes = hash[H](bf, item)
+  var hashes = hasher[H](bf, item)
   for h in hashes:
     bf.bitVector[h] = 1
 
 proc lookup*[H](bf: var BloomFilter[H], item: string): bool {.inline.} =
   ## Check if `item` is in Bloom Filter
-  let hashes = hash[H](bf, item)
+  var hashes = hasher[H](bf, item)
   result = true
   for h in hashes:
     result = result and bool(bf.bitVector[h])
