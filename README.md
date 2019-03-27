@@ -33,7 +33,7 @@ import bitvector
   assert bitvectorA[131..194] == bitvectorA[400..463]
 ```
 ## Bloom Filter Performance
-A Bloom Filter speed test is included in `test_bloom.nim`. A test case of 10M insertions executes in ~3.2 seconds and 10M lookups in ~3.1 seconds for a Bloom filter with a 1 in 1000 target error rate (0.0007). This was performed on asingle thread by passing the -d:release flag to the Nim compiler on a Dell XP3 13 laptop (i7 with 16GB Ram). `k` was computed to its optimal 10 hash functions, while the Bloom filter size was 18.75MB in size.
+A Bloom Filter speed test is included in `test_bloom.nim`. A test case of 10M insertions executes in ~3.2 seconds and 10M lookups in ~3.1 seconds for a Bloom filter with a 1 in 1000 target error rate (0.001) and actual error rate of 0.0007. This was performed on asingle thread by passing the -d:release flag to the Nim compiler on a Dell XP3 13 laptop (i7 with 16GB Ram). `k` was computed to its optimal 10 hash functions, while the Bloom filter size was 18.75MB in size.
 
 ## Installation
 Install <a class="external reference" href="https://nim-lang.org/install.html">Nim</a> for Windows or Unix by following the instructions in , or preferably by installing <a class="reference external" href="https://github.com/dom96/choosenim">choosenim</a>
