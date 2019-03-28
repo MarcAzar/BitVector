@@ -3,7 +3,7 @@ import os, times
 from random import rand
 
 type
-  H = int
+  H = uint64
 
 when isMainModule:
   echo "Quick working Bloom filter example."

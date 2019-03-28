@@ -2,7 +2,7 @@ import bitvector, os, times
 from random import rand, randomize
 
 type
-  H = int
+  H = uint64
 
 when isMainModule:
   echo "Testing bitvector library"
