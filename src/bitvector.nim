@@ -42,7 +42,7 @@
 ##    assert bitvectorA[131..194] == bitvectorA[400..463]
 ##
 type 
-  Units* = uint8 | uint16 | uint32 | uint64
+  Units* = SomeUnsignedInt
   Bit = range[0..1]
   BitVector*[T: Units] = object
     Base: seq[T]
