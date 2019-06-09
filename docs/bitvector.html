@@ -1243,7 +1243,7 @@ function main() {
   <a class="reference reference-toplevel" href="#7" id="57">Types</a>
   <ul class="simple simple-toc-section">
       <li><a class="reference" href="#Units"
-    title="Units = uint8 | uint16 | uint32 | uint64"><wbr />Units<span class="attachedType" style="visibility:hidden"></span></a></li>
+    title="Units = SomeUnsignedInt"><wbr />Units<span class="attachedType" style="visibility:hidden"></span></a></li>
   <li><a class="reference" href="#BitVector"
     title="BitVector[T] = object
   Base: seq[T]"><wbr />Bit<wbr />Vector<span class="attachedType" style="visibility:hidden"></span></a></li>
@@ -1253,20 +1253,30 @@ function main() {
 <li>
   <a class="reference reference-toplevel" href="#12" id="62">Procs</a>
   <ul class="simple simple-toc-section">
+      <li><a class="reference" href="#%5B%5D%3D%2CBitVector%5BT%5D%2Cint%2CBit"
+    title="`[]=`[T](b: var BitVector[T]; i: int; value: Bit)"><wbr />`[]=`<span class="attachedType" style="visibility:hidden">BitVector</span></a></li>
+  <li><a class="reference" href="#%5B%5D%3D%2CBitVector%5BT%5D%2CSlice%5Bint%5D%2CT"
+    title="`[]=`[T](x: var BitVector[T]; i: Slice[int]; value: T)"><wbr />`[]=`<span class="attachedType" style="visibility:hidden">BitVector</span></a></li>
+
+  </ul>
+</li>
+<li>
+  <a class="reference reference-toplevel" href="#13" id="63">Funcs</a>
+  <ul class="simple simple-toc-section">
       <li><a class="reference" href="#newBitVector%2Cint"
     title="newBitVector[T](size: int): BitVector[T]"><wbr />new<wbr />Bit<wbr />Vector<span class="attachedType" style="visibility:hidden">BitVector</span></a></li>
   <li><a class="reference" href="#%5B%5D%2CBitVector%5BT%5D%2Cint"
     title="`[]`[T](b: BitVector[T]; i: int): Bit"><wbr />`[]`<span class="attachedType" style="visibility:hidden">BitVector</span></a></li>
-  <li><a class="reference" href="#%5B%5D%3D%2CBitVector%5BT%5D%2Cint%2CBit"
-    title="`[]=`[T](b: var BitVector[T]; i: int; value: Bit)"><wbr />`[]=`<span class="attachedType" style="visibility:hidden">BitVector</span></a></li>
   <li><a class="reference" href="#%5B%5D%2CBitVector%5BT%5D%2CSlice%5Bint%5D"
-    title="`[]`[T](b: BitVector[T]; i: Slice[int]): T"><wbr />`[]`<span class="attachedType" style="visibility:hidden">BitVector</span></a></li>
-  <li><a class="reference" href="#%5B%5D%3D%2CBitVector%5BT%5D%2CSlice%5Bint%5D%2CT"
-    title="`[]=`[T](b: var BitVector[T]; i: Slice[int]; value: T)"><wbr />`[]=`<span class="attachedType" style="visibility:hidden">BitVector</span></a></li>
+    title="`[]`[T](x: BitVector[T]; i: Slice[int]): T"><wbr />`[]`<span class="attachedType" style="visibility:hidden">BitVector</span></a></li>
   <li><a class="reference" href="#cap%2CBitVector%5BT%5D"
     title="cap[T](b: BitVector[T]): int"><wbr />cap<span class="attachedType" style="visibility:hidden">BitVector</span></a></li>
   <li><a class="reference" href="#len%2CBitVector%5BT%5D"
     title="len[T](b: BitVector[T]): int"><wbr />len<span class="attachedType" style="visibility:hidden">BitVector</span></a></li>
+  <li><a class="reference" href="#toBitVector%2CopenArray%5Bint%5D"
+    title="toBitVector[T](x: openArray[int]): BitVector[T]"><wbr />to<wbr />Bit<wbr />Vector<span class="attachedType" style="visibility:hidden">BitVector</span></a></li>
+  <li><a class="reference" href="#toBitVector%2Cint"
+    title="toBitVector[T](x: int): BitVector[T]"><wbr />to<wbr />Bit<wbr />Vector<span class="attachedType" style="visibility:hidden">BitVector</span></a></li>
   <li><a class="reference" href="#%24%2CBitVector%5BT%5D"
     title="`$`[T](b: BitVector[T]): string"><wbr />`$`<span class="attachedType" style="visibility:hidden">BitVector</span></a></li>
 
@@ -1314,7 +1324,7 @@ assert bitvectorA[131..194] == bitvectorA[400..463]</pre>
 <h1><a class="toc-backref" href="#7">Types</a></h1>
 <dl class="item">
 <a id="Units"></a>
-<dt><pre><a href="bitvector.html#Units"><span class="Identifier">Units</span></a> <span class="Other">=</span> <span class="Identifier">uint8</span> <span class="Operator">|</span> <span class="Identifier">uint16</span> <span class="Operator">|</span> <span class="Identifier">uint32</span> <span class="Operator">|</span> <span class="Identifier">uint64</span></pre></dt>
+<dt><pre><a href="bitvector.html#Units"><span class="Identifier">Units</span></a> <span class="Other">=</span> <span class="Identifier">SomeUnsignedInt</span></pre></dt>
 <dd>
 
 
@@ -1332,50 +1342,67 @@ assert bitvectorA[131..194] == bitvectorA[400..463]</pre>
 <div class="section" id="12">
 <h1><a class="toc-backref" href="#12">Procs</a></h1>
 <dl class="item">
-<a id="newBitVector,int"></a>
-<dt><pre><span class="Keyword">proc</span> <span class="Identifier">newBitVector</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">size</span><span class="Other">:</span> <span class="Identifier">int</span><span class="Other">)</span><span class="Other">:</span> <a href="bitvector.html#BitVector"><span class="Identifier">BitVector</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">inline</span></span><span class="Other">.}</span></span></pre></dt>
-<dd>
-Create new in-memory BitVector of type T and number of elements is <cite>size</cite> rounded up to the nearest byte. 
-
-</dd>
-<a id="[],BitVector[T],int"></a>
-<dt><pre><span class="Keyword">proc</span> <span class="Identifier">`[]`</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">b</span><span class="Other">:</span> <a href="bitvector.html#BitVector"><span class="Identifier">BitVector</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">;</span> <span class="Identifier">i</span><span class="Other">:</span> <span class="Identifier">int</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Bit</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">inline</span></span><span class="Other">.}</span></span></pre></dt>
-<dd>
-
-
-</dd>
 <a id="[]=,BitVector[T],int,Bit"></a>
 <dt><pre><span class="Keyword">proc</span> <span class="Identifier">`[]=`</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">b</span><span class="Other">:</span> <span class="Keyword">var</span> <a href="bitvector.html#BitVector"><span class="Identifier">BitVector</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">;</span> <span class="Identifier">i</span><span class="Other">:</span> <span class="Identifier">int</span><span class="Other">;</span> <span class="Identifier">value</span><span class="Other">:</span> <span class="Identifier">Bit</span><span class="Other">)</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">inline</span></span><span class="Other">.}</span></span></pre></dt>
 <dd>
 
 
 </dd>
-<a id="[],BitVector[T],Slice[int]"></a>
-<dt><pre><span class="Keyword">proc</span> <span class="Identifier">`[]`</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">b</span><span class="Other">:</span> <a href="bitvector.html#BitVector"><span class="Identifier">BitVector</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">;</span> <span class="Identifier">i</span><span class="Other">:</span> <span class="Identifier">Slice</span><span class="Other">[</span><span class="Identifier">int</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">T</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">inline</span></span><span class="Other">.}</span></span></pre></dt>
-<dd>
-
-
-</dd>
 <a id="[]=,BitVector[T],Slice[int],T"></a>
-<dt><pre><span class="Keyword">proc</span> <span class="Identifier">`[]=`</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">b</span><span class="Other">:</span> <span class="Keyword">var</span> <a href="bitvector.html#BitVector"><span class="Identifier">BitVector</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">;</span> <span class="Identifier">i</span><span class="Other">:</span> <span class="Identifier">Slice</span><span class="Other">[</span><span class="Identifier">int</span><span class="Other">]</span><span class="Other">;</span> <span class="Identifier">value</span><span class="Other">:</span> <span class="Identifier">T</span><span class="Other">)</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">inline</span></span><span class="Other">.}</span></span></pre></dt>
+<dt><pre><span class="Keyword">proc</span> <span class="Identifier">`[]=`</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">x</span><span class="Other">:</span> <span class="Keyword">var</span> <a href="bitvector.html#BitVector"><span class="Identifier">BitVector</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">;</span> <span class="Identifier">i</span><span class="Other">:</span> <span class="Identifier">Slice</span><span class="Other">[</span><span class="Identifier">int</span><span class="Other">]</span><span class="Other">;</span> <span class="Identifier">value</span><span class="Other">:</span> <span class="Identifier">T</span><span class="Other">)</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">inline</span></span><span class="Other">.}</span></span></pre></dt>
 <dd>
 Note that this uses bitwise-or, therefore it will NOT overwrite previously set bits 
 
 </dd>
+
+</dl></div>
+<div class="section" id="13">
+<h1><a class="toc-backref" href="#13">Funcs</a></h1>
+<dl class="item">
+<a id="newBitVector,int"></a>
+<dt><pre><span class="Keyword">func</span> <span class="Identifier">newBitVector</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">size</span><span class="Other">:</span> <span class="Identifier">int</span><span class="Other">)</span><span class="Other">:</span> <a href="bitvector.html#BitVector"><span class="Identifier">BitVector</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">inline</span></span><span class="Other">.}</span></span></pre></dt>
+<dd>
+Create new in-memory BitVector of type T and number of elements is <cite>size</cite> rounded up to the nearest byte. 
+
+</dd>
+<a id="[],BitVector[T],int"></a>
+<dt><pre><span class="Keyword">func</span> <span class="Identifier">`[]`</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">b</span><span class="Other">:</span> <a href="bitvector.html#BitVector"><span class="Identifier">BitVector</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">;</span> <span class="Identifier">i</span><span class="Other">:</span> <span class="Identifier">int</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Bit</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">inline</span></span><span class="Other">.}</span></span></pre></dt>
+<dd>
+
+
+</dd>
+<a id="[],BitVector[T],Slice[int]"></a>
+<dt><pre><span class="Keyword">func</span> <span class="Identifier">`[]`</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">x</span><span class="Other">:</span> <a href="bitvector.html#BitVector"><span class="Identifier">BitVector</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">;</span> <span class="Identifier">i</span><span class="Other">:</span> <span class="Identifier">Slice</span><span class="Other">[</span><span class="Identifier">int</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">T</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">inline</span></span><span class="Other">.}</span></span></pre></dt>
+<dd>
+
+
+</dd>
 <a id="cap,BitVector[T]"></a>
-<dt><pre><span class="Keyword">proc</span> <span class="Identifier">cap</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">b</span><span class="Other">:</span> <a href="bitvector.html#BitVector"><span class="Identifier">BitVector</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">int</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">inline</span></span><span class="Other">.}</span></span></pre></dt>
+<dt><pre><span class="Keyword">func</span> <span class="Identifier">cap</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">b</span><span class="Other">:</span> <a href="bitvector.html#BitVector"><span class="Identifier">BitVector</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">int</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">inline</span></span><span class="Other">.}</span></span></pre></dt>
 <dd>
 Returns capacity, i.e number of bits
 
 </dd>
 <a id="len,BitVector[T]"></a>
-<dt><pre><span class="Keyword">proc</span> <span class="Identifier">len</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">b</span><span class="Other">:</span> <a href="bitvector.html#BitVector"><span class="Identifier">BitVector</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">int</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">inline</span></span><span class="Other">.}</span></span></pre></dt>
+<dt><pre><span class="Keyword">func</span> <span class="Identifier">len</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">b</span><span class="Other">:</span> <a href="bitvector.html#BitVector"><span class="Identifier">BitVector</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">int</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">inline</span></span><span class="Other">.}</span></span></pre></dt>
 <dd>
 Returns length, i.e number of elements
 
 </dd>
+<a id="toBitVector,openArray[int]"></a>
+<dt><pre><span class="Keyword">func</span> <span class="Identifier">toBitVector</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">x</span><span class="Other">:</span> <span class="Identifier">openArray</span><span class="Other">[</span><span class="Identifier">int</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <a href="bitvector.html#BitVector"><span class="Identifier">BitVector</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span></pre></dt>
+<dd>
+
+
+</dd>
+<a id="toBitVector,int"></a>
+<dt><pre><span class="Keyword">func</span> <span class="Identifier">toBitVector</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">x</span><span class="Other">:</span> <span class="Identifier">int</span><span class="Other">)</span><span class="Other">:</span> <a href="bitvector.html#BitVector"><span class="Identifier">BitVector</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span></pre></dt>
+<dd>
+
+
+</dd>
 <a id="$,BitVector[T]"></a>
-<dt><pre><span class="Keyword">proc</span> <span class="Identifier">`$`</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">b</span><span class="Other">:</span> <a href="bitvector.html#BitVector"><span class="Identifier">BitVector</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">string</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">inline</span></span><span class="Other">.}</span></span></pre></dt>
+<dt><pre><span class="Keyword">func</span> <span class="Identifier">`$`</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">b</span><span class="Other">:</span> <a href="bitvector.html#BitVector"><span class="Identifier">BitVector</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">string</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">inline</span></span><span class="Other">.}</span></span></pre></dt>
 <dd>
 Prints number of bits and elements the BitVector is capable of handling. It also prints out a slice if specified in little endian format.
 
@@ -1390,7 +1417,7 @@ Prints number of bits and elements the BitVector is capable of handling. It also
       <div class="twelve-columns footer">
         <span class="nim-sprite"></span>
         <br/>
-        <small>Made with Nim. Generated: 2019-03-28 09:04:08 UTC</small>
+        <small>Made with Nim. Generated: 2019-06-09 19:14:26 UTC</small>
       </div>
     </div>
   </div>
