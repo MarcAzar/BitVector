@@ -48,10 +48,10 @@ type
     Base: seq[T]
 
 # Forward declarations
-proc `len`*[T](b: BitVector[T]): int {.inline.}
-proc cap*[T](b: BitVector[T]): int {.inline.}
+func `len`*[T](b: BitVector[T]): int {.inline.}
+func cap*[T](b: BitVector[T]): int {.inline.}
 
-proc newBitVector*[T](size: int): BitVector[T] {.inline.} =
+func newBitVector*[T](size: int): BitVector[T] {.inline.} =
   ## Create new in-memory BitVector of type T and number of elements is
   ## `size` rounded up to the nearest byte. 
   assert(size >= T.sizeof * 8, "Min vector size is " & $(T.sizeof * 8))
@@ -59,7 +59,7 @@ proc newBitVector*[T](size: int): BitVector[T] {.inline.} =
   result.Base = newSeqOfCap[T](numberOfElements)
   result.Base.setlen(numberOfElements)
 
-proc `[]`*[T](b: BitVector[T], i: int): Bit {.inline.} =
+func `[]`*[T](b: BitVector[T], i: int): Bit {.inline.} =
   assert(i < b.cap and i >= 0, "Index out of range")
   b.Base[i div (T.sizeof * 8)] shr (i and (T.sizeof * 8 - 1)) and 1
 
@@ -71,81 +71,101 @@ proc `[]=`*[T](b: var BitVector[T], i: int, value: Bit) {.inline.} =
   else:
     w[] = w[] or (1.T shl (i and (T.sizeof * 8 - 1)))
 
-proc `[]`*[T](b: BitVector[T], i: Slice[int]): T {.inline.} =
+func `[]`*[T](x: BitVector[T], i: Slice[int]): T {.inline.} =
   if i.a < i.b:
-    assert(i.b < b.cap and i.a >= 0, "Index out of range")
+    assert(i.b < x.cap and i.a >= 0, "Index out of range")
     assert((i.b - i.a) <= (T.sizeof * 8),
-      "Only slices up to " & $(T.sizeof * 8) & " bits are supported")
+       "Only slices up to " & $(T.sizeof * 8) & " bits are supported")
     let elA = i.a div (T.sizeof * 8)
     let elB = i.b div (T.sizeof * 8)
     let offsetA = i.a and (T.sizeof * 8 - 1)
     let offsetB = (T.sizeof * 8) - offsetA
-    result = b.Base[elA] shr offsetA
+    result = x.Base[elA] shr offsetA
     if elA != elB:
-      let slice = b.Base[elB] shl offsetB
+      let slice = x.Base[elB] shl offsetB
       result = result or slice
     elif i.a != i.b and i.b < (T.sizeof * 8 - 1):
       let innerOffset = i.b and (T.sizeof * 8 - 1)
       result =
-        (((1.T shl innerOffset) - 1) or (1.T shl innerOffset)) and result
+        (((((1.T shl innerOffset) - 1) or (1.T shl innerOffset)) and
+        x.Base[elA]) shr offsetA)
   else:
-    assert(i.a < b.cap and i.b >= 0, "Index out of range")
+    assert(i.a < x.cap and i.b >= 0, "Index out of range")
     assert((i.a - i.b) <= (T.sizeof * 8),
-      "Only slices up to " & $(T.sizeof * 8) & " bits are supported")
+       "Only slices up to " & $(T.sizeof * 8) & " bits are supported")
     let elA = i.b div (T.sizeof * 8)
     let elB = i.a div (T.sizeof * 8)
     let offsetA = i.b and (T.sizeof * 8 - 1)
     let offsetB = (T.sizeof * 8) - offsetA
-    result = b.Base[elA] shr offsetA
+    result = x.Base[elA] shr offsetA
     if elA != elB:
-      let slice = b.Base[elB] shl offsetB
+      let slice = x.Base[elB] shl offsetB
       result = result or slice
     elif i.a != i.b and i.a < (T.sizeof * 8 - 1):
       let innerOffset = i.a and (T.sizeof * 8 - 1)
       result =
-        (((1.T shl innerOffset) - 1) or (1.T shl innerOffset)) and result
+        (((((1.T shl innerOffset) - 1) or (1.T shl innerOffset)) and
+        x.Base[elA]) shr offsetA)
 
-proc `[]=`*[T](b: var BitVector[T], i: Slice[int], value: T) {.inline.} =
+proc `[]=`*[T](x: var BitVector[T], i: Slice[int], value: T) {.inline.} =
   ## Note that this uses bitwise-or, therefore it will NOT overwrite
   ## previously set bits 
   if i.a < i.b:
-    assert(i.b < b.cap and i.a >= 0, "Index out of range")
+    assert(i.b < x.cap and i.a >= 0, "Index out of range")
     assert((i.b - i.a) <= (T.sizeof * 8),
-      "Only slices up to " & $(T.sizeof * 8) & " bits are supported")
+       "Only slices up to " & $(T.sizeof * 8) & " bits are supported")
     let elA = i.a div (T.sizeof * 8)
     let elB = i.b div (T.sizeof * 8)
     let offsetA = i.a and (T.sizeof * 8 - 1)
     let offsetB = (T.sizeof * 8) - offsetA
 
     let insertA = value shl offsetA
-    b.Base[elA] = b.Base[elA] or insertA
+    x.Base[elA] = x.Base[elA] or insertA
     if elA != elB:
       let insertB = value shr offsetB
-      b.Base[elB] = b.Base[elB] or insertB
+      x.Base[elB] = x.Base[elB] or insertB
   else:
-    assert(i.a < b.cap and i.b >= 0, "Index out of range")
+    assert(i.a < x.cap and i.b >= 0, "Index out of range")
     assert((i.a - i.b) <= (T.sizeof * 8),
-      "Only slices up to " & $(T.sizeof * 8) & " bits are supported")
+       "Only slices up to " & $(T.sizeof * 8) & " bits are supported")
     let elA = i.b div (T.sizeof * 8)
     let elB = i.a div (T.sizeof * 8)
     let offsetA = i.b and (T.sizeof * 8 - 1)
     let offsetB = (T.sizeof * 8) - offsetA
 
     let insertA = value shl offsetA
-    b.Base[elA] = b.Base[elA] or insertA
+    x.Base[elA] = x.Base[elA] or insertA
     if elA != elB:
       let insertB = value shr offsetB
-      b.Base[elB] = b.Base[elB] or insertB
+      x.Base[elB] = x.Base[elB] or insertB
 
-proc cap*[T](b: BitVector[T]): int {.inline.} =
+func cap*[T](b: BitVector[T]): int {.inline.} =
   ## Returns capacity, i.e number of bits
   b.len * (T.sizeof * 8)
 
-proc `len`*[T](b: BitVector[T]): int {.inline.} =
+func `len`*[T](b: BitVector[T]): int {.inline.} =
   ## Returns length, i.e number of elements
   b.Base.len
 
-proc `$`*[T](b: BitVector[T]): string {.inline.} =
+func toBitVector*[T](x: openArray[int]): BitVector[T] =
+  result = newBitVector[T](x.len)
+  for i in 0 ..< x.len:
+    if x[x.len - 1 - i] != 0: result[i] = 1
+
+func builtin_clz(x: culong): cint {.importc: "__builtin_clzl", cdecl.}
+func fastLog2(x: uint32): int {.inline, noSideEffect.} =
+  (63 - builtin_clz(x))
+
+func toBitVector*[T](x: int): BitVector[T] =
+  var tmp = x.uint32
+  var shift = fastLog2(tmp)
+  result = newBitVector[T](shift)
+  while tmp != 0:
+    result[shift] = 1
+    tmp = tmp - (1 shl shift).uint32
+    shift = fastLog2(tmp)
+
+func `$`*[T](b: BitVector[T]): string {.inline.} =
   ## Prints number of bits and elements the BitVector is capable of handling.
   ## It also prints out a slice if specified in little endian format.
   result =
