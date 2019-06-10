@@ -66,8 +66,8 @@ when isMainModule:
 
   # Test that bit arrays < sizeof(BitArrayScalar) fail
   var bitvector64 = newBitVector[H](64)
-  doAssert bitvector64.cap == 128
-  doAssert bitvector64.len == 2
+  doAssert bitvector64.cap == 64
+  doAssert bitvector64.len == 1
 
   # Test clearing bits
   var bitvectorE = newBitVector[H](64)

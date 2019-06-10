@@ -165,6 +165,9 @@ func toBitVector*[T](x: int): BitVector[T] =
     tmp = tmp - (1 shl shift).uint32
     shift = fastLog2(tmp)
 
+func `==`*(x, y: Bitvector): bool =
+  x[0 .. (x.cap - 1)] == y[0 .. (y.cap - 1)]
+
 func `$`*[T](b: BitVector[T]): string {.inline.} =
   ## Prints number of bits and elements the BitVector is capable of handling.
   ## It also prints out a slice if specified in little endian format.
