@@ -148,7 +148,8 @@ func `len`*[T](b: BitVector[T]): int {.inline.} =
   b.Base.len
 
 func toBitVector*[T](x: openArray[int]): BitVector[T] =
-  result = newBitVector[T](x.len - 1)
+  let length = x.len div (T.sizeof * 8)
+  result = newBitVector[T](length)
   for i in 0 ..< x.len:
     if x[x.len - 1 - i] != 0: result[i] = 1
 
