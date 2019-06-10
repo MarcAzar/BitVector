@@ -54,10 +54,10 @@ func cap*[T](b: BitVector[T]): int {.inline.}
 func newBitVector*[T](size: int): BitVector[T] {.inline.} =
   ## Create new in-memory BitVector of type T and number of elements is
   ## `size` rounded up to the nearest byte. 
-  assert(size >= T.sizeof * 8, "Min vector size is " & $(T.sizeof * 8))
-  let numberOfElements = 1 + size div (T.sizeof * 8)
-  result.Base = newSeqOfCap[T](numberOfElements)
-  result.Base.setlen(numberOfElements)
+  var blocks = size div (T.sizeof * 8)
+  if blocks == 0: blocks = 1
+  result.Base = newSeqOfCap[T](blocks)
+  result.Base.setlen(blocks)
 
 func `[]`*[T](b: BitVector[T], i: int): Bit {.inline.} =
   assert(i < b.cap and i >= 0, "Index out of range")
@@ -145,11 +145,10 @@ func cap*[T](b: BitVector[T]): int {.inline.} =
 
 func `len`*[T](b: BitVector[T]): int {.inline.} =
   ## Returns length, i.e number of elements
-  b.Base.len
+  b.Base.len()
 
 func toBitVector*[T](x: openArray[int]): BitVector[T] =
-  let length = x.len div (T.sizeof * 8)
-  result = newBitVector[T](length)
+  result = newBitVector[T](x.len)
   for i in 0 ..< x.len:
     if x[x.len - 1 - i] != 0: result[i] = 1
 
