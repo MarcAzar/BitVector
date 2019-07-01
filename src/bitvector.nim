@@ -50,15 +50,21 @@ type
 # Forward declarations
 func `len`*[T](b: BitVector[T]): int {.inline.}
 func cap*[T](b: BitVector[T]): int {.inline.}
+func `[]`*[T](b: BitVector[T], i: int): Bit {.inline.}
 
-func newBitVector*[T](size: int): BitVector[T] {.inline.} =
+func newBitVector*[T](size: int, init = 0): BitVector[T] {.inline.} =
   ## Create new in-memory BitVector of type T and number of elements is
-  ## `size` rounded up to the nearest byte. 
+  ## `size` rounded up to the nearest byte. You can initialize the
+  ## bitvector to 1 by passing any value other than zero to init.
+  ##
   var blocks = size div (T.sizeof * 8)
-  if blocks == 0: blocks = 1
-  if size > (T.sizeof * 8): inc blocks
+  if blocks == 0 : blocks = 1
+  elif (size mod (T.sizeof * 8)) > 0 : blocks += 1
   result.Base = newSeqOfCap[T](blocks)
   result.Base.setlen(blocks)
+  if init != 0:
+    for i in 0 ..< size:
+      result[i] = 1
 
 func `[]`*[T](b: BitVector[T], i: int): Bit {.inline.} =
   assert(i < b.cap and i >= 0, "Index out of range")
