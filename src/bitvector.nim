@@ -56,6 +56,7 @@ func newBitVector*[T](size: int): BitVector[T] {.inline.} =
   ## `size` rounded up to the nearest byte. 
   var blocks = size div (T.sizeof * 8)
   if blocks == 0: blocks = 1
+  if size > (T.sizeof * 8): inc blocks
   result.Base = newSeqOfCap[T](blocks)
   result.Base.setlen(blocks)
 
