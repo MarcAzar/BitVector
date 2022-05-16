@@ -1,6 +1,6 @@
 # Package
 
-version       = "0.4.10"
+version       = "0.4.11"
 author        = "Marc Azar"
 description   = "Bit Vector with base SomeOrdinal and little endian format. Supports `seq` based operations."
 license       = "MIT"
