@@ -51,6 +51,7 @@ type
 func `len`*[T](b: BitVector[T]): int {.inline.}
 func cap*[T](b: BitVector[T]): int {.inline.}
 func `[]`*[T](b: BitVector[T], i: int): Bit {.inline.}
+proc `[]=`*[T](b: var BitVector[T], i: int, value: Bit) {.inline.}
 
 func newBitVector*[T](size: int, init = 0): BitVector[T] {.inline.} =
   ## Create new in-memory BitVector of type T and number of elements is
